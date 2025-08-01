@@ -1,0 +1,51 @@
+#--------------------------------------------------------------------------------------------
+# Camera Parameters
+#--------------------------------------------------------------------------------------------
+Camera.type: "PinHole"
+
+Camera.fx: 439.25509
+Camera.fy: 439.43033
+Camera.cx: 301.73787
+Camera.cy: 267.94284
+
+# Distortion coefficients
+Camera.k1: -0.026410
+Camera.k2: -0.061692
+Camera.p1:  0.004067
+Camera.p2:  0.002073
+Camera.k3:  0.0
+
+# Image dimensions
+Camera.width: 640
+Camera.height: 480
+
+# Optional (used by stereo/depth, safe to leave as-is or remove for mono)
+# Camera.bf: 40.0
+
+# Image format
+Camera.fps: 30.0
+Camera.RGB: 1  # Set to 1 if your image topic uses RGB, otherwise 0 for BGR
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters
+#--------------------------------------------------------------------------------------------
+ORBextractor.nFeatures: 1000
+ORBextractor.scaleFactor: 1.2
+ORBextractor.nLevels: 8
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 7
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters (optional)
+#--------------------------------------------------------------------------------------------
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1.0
+Viewer.GraphLineWidth: 0.9
+Viewer.PointSize: 2.0
+Viewer.CameraSize: 0.08
+Viewer.CameraLineWidth: 3.0
+Viewer.ViewpointX: 0.0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: -3.5
+Viewer.ViewpointF: 500.0
+

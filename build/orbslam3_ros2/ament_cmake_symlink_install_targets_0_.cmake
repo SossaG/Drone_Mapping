@@ -1,0 +1,1 @@
+ament_cmake_symlink_install_targets("TARGET_FILES" "/home/ivans/colcon_ws/build/orbslam3_ros2/mono" "/home/ivans/colcon_ws/build/orbslam3_ros2/rgbd" "/home/ivans/colcon_ws/build/orbslam3_ros2/stereo" "TARGETS" "mono" "rgbd" "stereo" "DESTINATION" "lib/orbslam3_ros2")

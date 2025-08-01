@@ -1,0 +1,8 @@
+v4l2_camera:
+  ros__parameters:
+    device: "/dev/video0"
+    pixel_format: "yuyv"
+    image_size: [640, 480]
+    output_encoding: "rgb8"
+    camera_frame_id: "camera_frame"
+
