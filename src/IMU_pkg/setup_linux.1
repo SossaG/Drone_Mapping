@@ -1,0 +1,325 @@
+#!/bin/bash
+
+#
+# Script to install the Phidgets Inc. repo onto a
+# Debian or Ubuntu system.
+#
+# Run as root or insert `sudo -E` before `bash`:
+#
+# curl -sL https://www.phidgets.com/downloads/setup_linux | bash -
+#   or
+# wget -qO- https://www.phidgets.com/downloads/setup_linux | bash -
+#
+#
+# This script was adapted from NodeSource:
+# https://github.com/nodesource/distributions/tree/master/deb/src
+#
+
+
+export DEBIAN_FRONTEND=noninteractive
+
+print_status() {
+    echo
+    echo "## $1"
+    echo
+}
+
+if test -t 1; then # if terminal
+    ncolors=$(which tput > /dev/null && tput colors) # supports color
+    if test -n "$ncolors" && test $ncolors -ge 8; then
+        termcols=$(tput cols)
+        bold="$(tput bold)"
+        underline="$(tput smul)"
+        standout="$(tput smso)"
+        normal="$(tput sgr0)"
+        black="$(tput setaf 0)"
+        red="$(tput setaf 1)"
+        green="$(tput setaf 2)"
+        yellow="$(tput setaf 3)"
+        blue="$(tput setaf 4)"
+        magenta="$(tput setaf 5)"
+        cyan="$(tput setaf 6)"
+        white="$(tput setaf 7)"
+    fi
+fi
+
+bail() {
+    echo 'Error executing command, exiting'
+    exit 1
+}
+
+exec_cmd_nobail() {
+    echo "+ $1"
+    bash -c "$1"
+}
+
+exec_cmd() {
+    exec_cmd_nobail "$1" || bail
+}
+
+setup() {
+
+print_status "Installing the Phidgets Inc. repo..."
+
+PRE_INSTALL_PKGS=""
+
+# Check that HTTPS transport is available to APT
+# (Check snaked from: https://get.docker.io/ubuntu/)
+
+if [ ! -e /usr/lib/apt/methods/https ]; then
+    PRE_INSTALL_PKGS="${PRE_INSTALL_PKGS} apt-transport-https"
+fi
+
+if [ ! -x /usr/bin/lsb_release ]; then
+    PRE_INSTALL_PKGS="${PRE_INSTALL_PKGS} lsb-release"
+fi
+
+if [ ! -x /usr/bin/curl ] && [ ! -x /usr/bin/wget ]; then
+    PRE_INSTALL_PKGS="${PRE_INSTALL_PKGS} curl"
+fi
+
+# Used by apt-key to add new keys
+
+if [ ! -x /usr/bin/gpg ]; then
+    PRE_INSTALL_PKGS="${PRE_INSTALL_PKGS} gnupg"
+fi
+
+if [ "X${PRE_INSTALL_PKGS}" != "X" ]; then
+    print_status "Installing packages required for setup:${PRE_INSTALL_PKGS}..."
+    # This next command needs to be redirected to /dev/null or the script will bork
+    # in some environments
+    exec_cmd 'apt-get update'
+    exec_cmd "apt-get install -y${PRE_INSTALL_PKGS} > /dev/null 2>&1"
+fi
+
+# try to find the upstream codename directly first
+if [ -e /etc/os-release ]; then
+    OS_RELEASE=/etc/os-release
+elif [ -e /usr/lib/os-release ]; then
+    OS_RELEASE=/usr/lib/os-release
+fi
+
+DISTRO=$(grep "^UBUNTU_CODENAME=" ${OS_RELEASE} | cut -d'=' -f2)
+
+if [ -z "${DISTRO}" ]; then
+    DISTRO=$(grep "^DEBIAN_CODENAME=" ${OS_RELEASE} | cut -d'=' -f2)
+fi
+
+if [ -z "${DISTRO}" ]; then
+    DISTRO=$(grep "^VERSION_CODENAME=" ${OS_RELEASE} | cut -d'=' -f2)
+fi
+
+# Debian 12+
+if [ -z "${DISTRO}" ] && [ -e /etc/debian_version ]; then
+    DISTRO=$(cut -d / -f 1 /etc/debian_version)
+fi
+
+# Fall back to using the codename from lsb_release
+if [ -z "${DISTRO}" ]; then
+    DISTRO=$(lsb_release -c -s)
+fi
+
+ARCH=$(dpkg --print-architecture)
+MACHINE=$(uname -m)
+
+check_alt() {
+    if [ "X${DISTRO}" == "X${2}" ]; then
+        echo
+        echo "## You seem to be using ${1} version ${DISTRO}."
+        echo "## This maps to the ${3} \"${4}\" repository."
+        DISTRO="${4}"
+    fi
+}
+
+# We try to map to the Debian/Ubuntu upstream codename
+# This should only be neccessary for older distros, and does NOT need to be updated
+check_alt "Astra Linux"    "orel"            "Debian"        "stretch"
+check_alt "BOSS"           "anokha"          "Debian"        "wheezy"
+check_alt "BOSS"           "anoop"           "Debian"        "jessie"
+check_alt "BOSS"           "drishti"         "Debian"        "stretch"
+check_alt "BOSS"           "unnati"          "Debian"        "buster"
+check_alt "BOSS"           "urja"            "Debian"        "bullseye"
+check_alt "bunsenlabs"     "bunsen-hydrogen" "Debian"        "jessie"
+check_alt "bunsenlabs"     "helium"          "Debian"        "stretch"
+check_alt "bunsenlabs"     "lithium"         "Debian"        "buster"
+check_alt "bunsenlabs"     "beryllium"       "Debian"        "bullseye"
+check_alt "bunsenlabs"     "boron"           "Debian"        "bookworm"
+check_alt "Devuan"         "jessie"          "Debian"        "jessie"
+check_alt "Devuan"         "ascii"           "Debian"        "stretch"
+check_alt "Devuan"         "beowulf"         "Debian"        "buster"
+check_alt "Devuan"         "chimaera"        "Debian"        "bullseye"
+check_alt "Devuan"         "daedalus"        "Debian"        "bookworm"
+check_alt "Devuan"         "ceres"           "Debian"        "bookworm"
+check_alt "Deepin"         "panda"           "Debian"        "bookworm"
+check_alt "Deepin"         "unstable"        "Debian"        "bookworm"
+check_alt "Deepin"         "stable"          "Debian"        "buster"
+check_alt "Deepin"         "apricot"         "Debian"        "buster"
+check_alt "elementaryOS"   "luna"            "Ubuntu"        "precise"
+check_alt "elementaryOS"   "freya"           "Ubuntu"        "trusty"
+check_alt "elementaryOS"   "loki"            "Ubuntu"        "xenial"
+check_alt "elementaryOS"   "juno"            "Ubuntu"        "bionic"
+check_alt "elementaryOS"   "hera"            "Ubuntu"        "bionic"
+check_alt "elementaryOS"   "odin"            "Ubuntu"        "focal"
+check_alt "elementaryOS"   "jolnir"          "Ubuntu"        "focal"
+check_alt "elementaryOS"   "horus"           "Ubuntu"        "jammy"
+check_alt "Kali"           "sana"            "Debian"        "jessie"
+check_alt "Kali"           "kali-rolling"    "Debian"        "bookworm"
+check_alt "Linux Mint"     "maya"            "Ubuntu"        "precise"
+check_alt "Linux Mint"     "qiana"           "Ubuntu"        "trusty"
+check_alt "Linux Mint"     "rafaela"         "Ubuntu"        "trusty"
+check_alt "Linux Mint"     "rebecca"         "Ubuntu"        "trusty"
+check_alt "Linux Mint"     "rosa"            "Ubuntu"        "trusty"
+check_alt "Linux Mint"     "sarah"           "Ubuntu"        "xenial"
+check_alt "Linux Mint"     "serena"          "Ubuntu"        "xenial"
+check_alt "Linux Mint"     "sonya"           "Ubuntu"        "xenial"
+check_alt "Linux Mint"     "sylvia"          "Ubuntu"        "xenial"
+check_alt "Linux Mint"     "tara"            "Ubuntu"        "bionic"
+check_alt "Linux Mint"     "tessa"           "Ubuntu"        "bionic"
+check_alt "Linux Mint"     "tina"            "Ubuntu"        "bionic"
+check_alt "Linux Mint"     "tricia"          "Ubuntu"        "bionic"
+check_alt "Linux Mint"     "ulyana"          "Ubuntu"        "focal"
+check_alt "Linux Mint"     "ulyssa"          "Ubuntu"        "focal"
+check_alt "Linux Mint"     "uma"             "Ubuntu"        "focal"
+check_alt "Linux Mint"     "una"             "Ubuntu"        "focal"
+check_alt "Linux Mint"     "vanessa"         "Ubuntu"        "jammy"
+check_alt "Linux Mint"     "vera"            "Ubuntu"        "jammy"
+check_alt "Liquid Lemur"   "lemur-3"         "Debian"        "stretch"
+check_alt "LMDE"           "betsy"           "Debian"        "jessie"
+check_alt "LMDE"           "cindy"           "Debian"        "stretch"
+check_alt "LMDE"           "debbie"          "Debian"        "buster"
+check_alt "LMDE"           "elsie"           "Debian"        "bullseye"
+check_alt "MX Linux 17"    "Horizon"         "Debian"        "stretch"
+check_alt "MX Linux 18"    "Continuum"       "Debian"        "stretch"
+check_alt "MX Linux 19"    "patito feo"      "Debian"        "buster"
+check_alt "MX Linux 21"    "wildflower"      "Debian"        "bullseye"
+check_alt "Pardus"         "onyedi"          "Debian"        "stretch"
+check_alt "Parrot"         "ara"             "Debian"        "bullseye"
+check_alt "PureOS"         "green"           "Debian"        "sid"
+check_alt "PureOS"         "amber"           "Debian"        "buster"
+check_alt "PureOS"         "byzantium"       "Debian"        "bullseye"
+check_alt "SolydXK"        "solydxk-9"       "Debian"        "stretch"
+check_alt "Sparky Linux"   "Tyche"           "Debian"        "stretch"
+check_alt "Sparky Linux"   "Nibiru"          "Debian"        "buster"
+check_alt "Sparky Linux"   "Po-Tolo"         "Debian"        "bullseye"
+check_alt "Tanglu"         "chromodoris"     "Debian"        "jessie"
+check_alt "Trisquel"       "toutatis"        "Ubuntu"        "precise"
+check_alt "Trisquel"       "belenos"         "Ubuntu"        "trusty"
+check_alt "Trisquel"       "flidas"          "Ubuntu"        "xenial"
+check_alt "Trisquel"       "etiona"          "Ubuntu"        "bionic"
+check_alt "Ubilinux"       "dolcetto"        "Debian"        "stretch"
+check_alt "Uruk GNU/Linux" "lugalbanda"      "Ubuntu"        "xenial"
+
+# For Ubuntu, map interim releases to the previous LTS
+check_alt "Ubuntu"         "utopic"          "Ubuntu"        "trusty"
+check_alt "Ubuntu"         "vivid"           "Ubuntu"        "trusty"
+check_alt "Ubuntu"         "wily"            "Ubuntu"        "trusty"
+check_alt "Ubuntu"         "yakkety"         "Ubuntu"        "xenial"
+check_alt "Ubuntu"         "zesty"           "Ubuntu"        "xenial"
+check_alt "Ubuntu"         "artful"          "Ubuntu"        "xenial"
+check_alt "Ubuntu"         "cosmic"          "Ubuntu"        "bionic"
+check_alt "Ubuntu"         "disco"           "Ubuntu"        "bionic"
+check_alt "Ubuntu"         "eoan"            "Ubuntu"        "bionic"
+check_alt "Ubuntu"         "groovy"          "Ubuntu"        "focal"
+check_alt "Ubuntu"         "hirsute"         "Ubuntu"        "focal"
+check_alt "Ubuntu"         "impish"          "Ubuntu"        "focal"
+check_alt "Ubuntu"         "kinetic"         "Ubuntu"        "jammy"
+check_alt "Ubuntu"         "lunar"           "Ubuntu"        "jammy"
+check_alt "Ubuntu"         "mantic"          "Ubuntu"        "jammy"
+check_alt "Ubuntu"         "oracular"        "Ubuntu"        "noble"
+check_alt "Ubuntu"         "plucky"          "Ubuntu"        "noble"
+
+# Map trixie (13) to bookworm (12)
+check_alt "Debian"         "trixie"          "Debian"        "bookworm"
+
+
+if [ "X${DISTRO}" == "Xdebian" ]; then
+  print_status "Unknown Debian-based distribution, checking /etc/debian_version..."
+  NEWDISTRO=$([ -e /etc/debian_version ] && cut -d/ -f1 < /etc/debian_version)
+  if [ "X${NEWDISTRO}" == "X" ]; then
+    print_status "Could not determine distribution from /etc/debian_version..."
+  else
+    DISTRO=$NEWDISTRO
+    print_status "Found \"${DISTRO}\" in /etc/debian_version..."
+  fi
+fi
+
+print_status "Confirming \"${DISTRO}\" is supported..."
+
+if [ -x /usr/bin/curl ]; then
+    exec_cmd_nobail "curl -sLf -o /dev/null 'https://www.phidgets.com/debian/dists/${DISTRO}/Release'"
+    RC=$?
+else
+    exec_cmd_nobail "wget -qO /dev/null -o /dev/null 'https://www.phidgets.com/debian/dists/${DISTRO}/Release'"
+    RC=$?
+fi
+
+if [[ $RC != 0 ]]; then
+    print_status """Your distribution, identified as \"${DISTRO}\", is not currently supported.
+     Refer to https://www.phidgets.com/docs/OS_-_Linux for source install instructions.
+"""
+    exit 1
+fi
+
+if [ -x /usr/bin/curl ]; then
+    exec_cmd_nobail "curl -sLf -o /dev/null 'https://www.phidgets.com/debian/dists/${DISTRO}/main/binary-${ARCH}/Release'"
+    RC=$?
+else
+    exec_cmd_nobail "wget -qO /dev/null -o /dev/null 'https://www.phidgets.com/debian/dists/${DISTRO}/main/binary-${ARCH}/Release'"
+    RC=$?
+fi
+
+if [[ $RC != 0 ]]; then
+    print_status """Your architecture, identified as \"${ARCH}\", is not currently supported for your distribution. 
+     Refer to https://www.phidgets.com/docs/OS_-_Linux for source install instructions.
+"""
+    exit 1
+fi
+
+if [ "X${ARCH}" == "Xarmhf" ] && [ "X${MACHINE}" == "Xarmv6l" ] ; then
+    print_status """Your architecture, identified as \"${MACHINE}\", is not currently supported for your distribution. 
+     Refer to https://www.phidgets.com/docs/OS_-_Linux for source install instructions.
+"""
+    exit 1
+fi
+
+print_status 'Downloading the Phidgets Inc. signing key...'
+
+# Remove any old copy of phidget repo
+exec_cmd "mkdir -p /usr/share/keyrings"
+exec_cmd "rm -f /usr/share/keyrings/phidgets.gpg"
+exec_cmd "rm -f /etc/apt/sources.list.d/phidgets.list"
+
+if [ -x /usr/bin/curl ]; then
+    exec_cmd 'curl -sLf -o /usr/share/keyrings/phidgets.gpg https://www.phidgets.com/gpgkey/pubring.gpg'
+else
+    exec_cmd 'wget -qO /usr/share/keyrings/phidgets.gpg https://www.phidgets.com/gpgkey/pubring.gpg'
+fi
+
+print_status "Creating apt sources list file for the Phidgets Inc. repo..."
+
+exec_cmd "echo 'deb [arch=${ARCH} signed-by=/usr/share/keyrings/phidgets.gpg] https://www.phidgets.com/debian ${DISTRO} main' > /etc/apt/sources.list.d/phidgets.list"
+exec_cmd "echo 'deb-src [arch=${ARCH} signed-by=/usr/share/keyrings/phidgets.gpg] https://www.phidgets.com/debian ${DISTRO} main' >> /etc/apt/sources.list.d/phidgets.list"
+
+print_status 'Running `apt-get update` for you...'
+
+exec_cmd 'apt-get update'
+
+print_status """Run \`${bold}sudo apt-get install -y libphidget22${normal}\` to install phidget22
+## If you wish to develop against libphidget22 in C/C++:
+     sudo apt-get install build-essential libphidget22-dev
+## If you wish to develop in Java:
+     sudo apt-get install default-jdk libphidget22java
+## If you wish to develop in Python:
+     pip3 install Phidget22
+## To install the phidget22admin command line tool:
+     sudo apt-get install phidget22admin
+## To install the Phidget Network Server:
+     sudo apt-get install phidget22networkserver phidget22wwwjs
+## To install the legacy phidget20 libraries:
+     sudo apt-get install libphidget21-0 libphidget21-dev libphidget21-java
+"""
+
+}
+
+## Defer setup until we have the complete script
+setup
