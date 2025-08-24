@@ -40,20 +40,7 @@ def generate_launch_description():
         'camera_type', default_value='mono', description='Camera type: mono, rgbd, stereo')
 
 
-    # SLAM Node
     slam_node = Node(
-        package='orbslam3_ros2',
-        executable=LaunchConfiguration('camera_type'),  # Get the executable based on camera type
-        output='screen',
-        parameters=[
-            {"vocab_path": vocab_file},
-            {"config_path": settings_file},
-        ]
-
-    )
-
-
-    """slam_node = Node(
         package='orbslam3_ros2',
         executable=LaunchConfiguration('camera_type'),  # Get the executable based on camera type
         output='screen',
@@ -64,7 +51,7 @@ def generate_launch_description():
         remappings=[
         ('/camera/rgb/image_color', '/image_raw')  # <-- this does the trick
     	]
-    )"""
+    )
 
     # ros2 bag record command (only starts if enabled)
     bag_record_process = ExecuteProcess(
