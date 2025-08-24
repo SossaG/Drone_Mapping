@@ -40,7 +40,7 @@ def generate_launch_description():
         'camera_type', default_value='mono', description='Camera type: mono, rgbd, stereo')
 
 
-    # SLAM Node
+    """# SLAM Node
     slam_node = Node(
         package='orbslam3_ros2',
         executable=LaunchConfiguration('camera_type'),  # Get the executable based on camera type
@@ -50,10 +50,10 @@ def generate_launch_description():
             {"config_path": settings_file},
         ]
 
-    )
+    )"""
 
 
-    """slam_node = Node(
+    slam_node = Node(
         package='orbslam3_ros2',
         executable=LaunchConfiguration('camera_type'),  # Get the executable based on camera type
         output='screen',
@@ -62,9 +62,10 @@ def generate_launch_description():
             {"config_path": settings_file},
         ],
         remappings=[
-        ('/camera/rgb/image_color', '/image_raw')  # <-- this does the trick
+        ('/camera/rgb/image_color', '/image_raw'),  # <-- this does the trick
+        ('/camera/camera/imu',     '/imu/data_raw'),   # feed ORB-SLAM3 from YOUR IMU topic
     	]
-    )"""
+    )
 
     # ros2 bag record command (only starts if enabled)
     bag_record_process = ExecuteProcess(
