@@ -1,6 +1,6 @@
 log/
 build/
 install/
-src/orbslam3_ros2/config/ORBvoc.txt
 bags/
-
+# ORB vocabulary anywhere (catch-all)
+**/ORBvoc.txt
