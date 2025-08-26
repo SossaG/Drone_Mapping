@@ -53,9 +53,14 @@ def generate_launch_description():
     	]
     )
 
+    # ensure bags/ exists inside your workspace
+    _bags_dir = os.path.join(os.getcwd(), 'bags')
+    os.makedirs(_bags_dir, exist_ok=True)
+
     # ros2 bag record command (only starts if enabled)
     bag_record_process = ExecuteProcess(
         cmd=['ros2', 'bag', 'record', '-a'],  # '-a' records all topics
+        cwd=_bags_dir,    
         condition=IfCondition(LaunchConfiguration("record_bag")),
         output='screen'
     )

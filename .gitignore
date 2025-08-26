@@ -2,4 +2,5 @@ log/
 build/
 install/
 src/orbslam3_ros2/config/ORBvoc.txt
+bags/
 
