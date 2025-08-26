@@ -1,0 +1,12 @@
+gscam:
+  ros__parameters:
+    pipeline: >
+      udpsrc port= 5004
+      caps=application/x-rtp,media=video,encoding-name=H264,payload=96,clock-rate=90000
+      ! rtph264depay ! h264parse ! avdec_h264
+      ! videoconvert ! video/x-raw,format=BGR
+      ! appsink sync=false
+    frame_id: camera
+    output_encoding: bgr8
+    camera_info_url: ""
+
