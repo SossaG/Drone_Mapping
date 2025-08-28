@@ -64,8 +64,8 @@ def generate_launch_description():
             {"config_path": settings_file},
         ],
         remappings=[
-        ('/camera/rgb/image_color', '/image_raw'),  # <-- this does the trick
-        ('/camera/camera/imu',     '/imu/data_raw'),   # feed ORB-SLAM3 from YOUR IMU topic
+        ('/camera/rgb/image_color', '/image_raw')  # <-- this does the trick
+        #('/camera/camera/imu',     '/imu/data_raw'),   # feed ORB-SLAM3 from YOUR IMU topic
     	]
     )
 

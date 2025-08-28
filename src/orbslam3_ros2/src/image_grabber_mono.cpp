@@ -8,9 +8,6 @@
 #include <fstream>
 #include <sophus/se3.hpp>
 
-#include <sensor_msgs/msg/imu.hpp>
-#include "include/ImuTypes.h"
-
 ImageGrabber::ImageGrabber(std::shared_ptr<ORB_SLAM3::System> pSLAM, bool bClahe,
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr rospub,
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cloud_pub,
@@ -87,24 +84,12 @@ void ImageGrabber::processImages()
         if (image.empty())
             continue;        
 
+        // Track the image and get the camera pose
+        Sophus::SE3f pose = mpSLAM->TrackMonocular(image,
+            img_msg->header.stamp.sec + 1e-9 * img_msg->header.stamp.nanosec);
 
-
-        
-        const double t_img = img_msg->header.stamp.sec + 1e-9 * img_msg->header.stamp.nanosec;
-        // Collect IMU messages up to this image time
-        std::vector<ORB_SLAM3::IMU::Point> vImu;
-        getImuUpTo(t_img, vImu);
-        // Call inertial tracker (3-arg)
-        Sophus::SE3f pose = mpSLAM->TrackMonocular(image, t_img, vImu);
         // Save pose to file
         //savePoseToFile(pose, img_msg->header.stamp.sec, img_msg->header.stamp.nanosec);
-
-        if (rosNode_ && !vImu.empty()) {
-            RCLCPP_INFO_ONCE(rosNode_->get_logger(),
-                "IMU fusion active. First frame had %zu IMU samples (dt=%.3f s).",
-                vImu.size(), t_img - vImu.front().t);
-            }
-
 
         // Get the 3D map points from the SLAM system
         std::vector<ORB_SLAM3::MapPoint*> mapPoints = mpSLAM->GetTrackedMapPoints();
