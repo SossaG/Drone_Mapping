@@ -1,0 +1,17 @@
+**jukit**
+*.mp4
+*.csv
+*.db3
+metadata.yaml
+**build**
+ORBvoc.txt
+bags/
+videos/
+**ORBvoc.txt**
+.cache
+*.pcd
+occupancy_grids/
+images/
+build/
+install/
+log/
