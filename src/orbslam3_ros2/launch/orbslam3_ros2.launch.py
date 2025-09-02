@@ -37,7 +37,7 @@ def generate_launch_description():
     start_octomap = DeclareLaunchArgument(
         'start_octomap', default_value='false', description='Start Octomap server')
     camera_type_arg = DeclareLaunchArgument(
-        'camera_type', default_value='mono', description='Camera type: mono, rgbd, stereo')
+        'camera_type', default_value='mono', description='Camera type: mono, rgbd, stereo, mono_imu') #added mono_imu so that new ros1 converted .cpp can handle accordingly
 
 
 
@@ -63,10 +63,6 @@ def generate_launch_description():
             {"vocab_path": vocab_file},
             {"config_path": settings_file},
         ],
-        remappings=[
-        ('/camera/rgb/image_color', '/image_raw')  # <-- this does the trick
-        #('/camera/camera/imu',     '/imu/data_raw'),   # feed ORB-SLAM3 from YOUR IMU topic
-    	]
     )
 
 
