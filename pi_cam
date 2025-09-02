@@ -1,4 +1,23 @@
-('Wrote calibration data to', '/tmp/calibrationdata.tar.gz')
+sudo modprobe v4l2loopback devices=1 video_nr=10 card_label="udp-h264" exclusive_caps=1
+
+gst-launch-1.0 -v \
+  udpsrc port=5004 caps="application/x-rtp, media=video, encoding-name=H264, payload=96, clock-rate=90000" \
+  ! rtpjitterbuffer drop-on-late=true latency=50 \
+  ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert \
+  ! video/x-raw,format=YUY2 \
+  ! v4l2sink device=/dev/video10 sync=false
+
+
+
+ros2 run v4l2_camera v4l2_camera_node --ros-args \
+  -p video_device:=/dev/video10 \
+  -p image_size:="[640,480]" \
+  -p output_encoding:=rgb8 \
+  -r image_raw:=/image_raw \
+  -r camera_info:=/camera_info
+
+
+  ('Wrote calibration data to', '/tmp/calibrationdata.tar.gz')
 D = [0.1627322996688074, -0.1650145768687133, 0.008211182076061706, -0.028930870037189266, 0.0]
 K = [1094.1702034248997, 0.0, 256.58643563910624, 0.0, 1073.7275377871583, 269.55756594188125, 0.0, 0.0, 1.0]
 R = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
