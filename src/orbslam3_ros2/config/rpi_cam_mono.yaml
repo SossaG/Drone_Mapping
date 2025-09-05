@@ -1,31 +1,67 @@
-# ORB-SLAM3 Camera Configuration for Raspberry Pi Camera Module 3 (Standard lens) at 640x480
+%YAML:1.0
+#--------------------------------------------------------------------------------------------
+# Camera Parameters. Adjust them!
+#--------------------------------------------------------------------------------------------
+
 Camera.type: "PinHole"
-Camera.fx: 658.0        # focal length in pixels (x)
-Camera.fy: 658.0        # focal length in pixels (y)
-Camera.cx: 320.0        # principal point x-coordinate (image center)
-Camera.cy: 240.0        # principal point y-coordinate (image center)
-Camera.k1: -0.28        # radial distortion coefficient k1:contentReference[oaicite:7]{index=7}
-Camera.k2:  0.07        # radial distortion coefficient k2:contentReference[oaicite:8]{index=8}
-Camera.p1:  0.0         # tangential distortion coefficient p1 (negligible):contentReference[oaicite:9]{index=9}
-Camera.p2:  0.0         # tangential distortion coefficient p2 (negligible):contentReference[oaicite:10]{index=10}
-Camera.k3:  0.0         # radial distortion coefficient k3 (assumed ~0)
-Camera.width:  640      # image width in pixels
-Camera.height: 480      # image height in pixels
-Camera.fps: 30.0        # camera frame rate
-Camera.RGB: 1           # color order: 1 for RGB (true for libcamera-ros images)
 
-# ORB Feature Extractor Parameters (recommended defaults)
-ORBextractor.nFeatures: 1000      # number of ORB features to retain
-ORBextractor.scaleFactor: 1.2     # scale factor between levels in the scale pyramid
-ORBextractor.nLevels: 8           # number of levels in the scale pyramid
-ORBextractor.iniThFAST: 20        # FAST threshold initializer
-ORBextractor.minThFAST: 7         # minimum FAST threshold
+Camera.fx: 1094.1702
+Camera.fy: 1073.72754
+Camera.cx: 256.58644
+Camera.cy: 269.55757
 
-# Viewer Settings (for visualization in ORB-SLAM3)
+# distortion parameters
+Camera.k1: 0.162732
+Camera.k2: -0.165015
+Camera.p1: 0.008211
+Camera.p2: -0.028931
+Camera.k3: 0.000000
+
+# Camera original resolution
+Camera.width: 640
+Camera.height: 480
+
+# Camera frames per second
+Camera.fps: 8.0
+
+# Camera.bf: 40.0  # Set based on your baseline
+
+# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+Camera.RGB: 1
+
+# ThDepth: 40.0
+# DepthMapFactor: 1.0
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters
+#--------------------------------------------------------------------------------------------
+
+# ORB Extractor: Number of features per image
+ORBextractor.nFeatures: 500 #1000
+
+# ORB Extractor: Scale factor between levels in the scale pyramid 
+ORBextractor.scaleFactor: 1.2 #1.2
+
+# ORB Extractor: Number of levels in the scale pyramid
+ORBextractor.nLevels: 8 #8
+
+# ORB Extractor: Fast threshold
+# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
+# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
+# You can lower these values if your images have low contrast
+ORBextractor.iniThFAST: 20 #20
+ORBextractor.minThFAST: 7 #7
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#--------------------------------------------------------------------------------------------
 Viewer.KeyFrameSize: 0.05
-Viewer.KeyFrameLineWidth: 1
+Viewer.KeyFrameLineWidth: 1.0
 Viewer.GraphLineWidth: 0.9
-Viewer.PointSize: 2
+Viewer.PointSize: 2.0
 Viewer.CameraSize: 0.08
-Viewer.CameraLineWidth: 3
-
+Viewer.CameraLineWidth: 3.0
+Viewer.ViewpointX: 0.0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: -3.5
+Viewer.ViewpointF: 500.0
