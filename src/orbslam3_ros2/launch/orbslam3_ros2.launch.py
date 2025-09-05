@@ -48,9 +48,6 @@ def generate_launch_description():
             {"vocab_path": vocab_file},
             {"config_path": settings_file},
         ],
-        remappings=[
-        ('/camera/rgb/image_color', '/image_raw')  # <-- this does the trick
-    	]
     )
 
     # ensure bags/ exists inside your workspace

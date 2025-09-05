@@ -32,6 +32,33 @@ Camera.RGB: 1
 # ThDepth: 40.0
 # DepthMapFactor: 1.0
 
+# IMU block (types that ORB-SLAM3 expects)
+IMU.InsertKFsWhenLost: 0
+
+IMU.NoiseGyro:  0.002     # ok as float
+IMU.NoiseAcc:   0.03      # ok as float
+IMU.GyroWalk:   0.0001    # ok as float
+IMU.AccWalk:    0.001     # ok as float
+IMU.Frequency:  100       # <-- MUST be an integer (no quotes, no decimal)
+IMU.g:          9.81      # ok as float
+
+# Camera (optical) -> IMU (body) transform used by ORB-SLAM3
+#the following is my own measured transform of the cam to imu when placed to the right of my touchpad
+Tbc: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: f
+  data: [
+     0, -1,  0,  0.12,
+     0,  0, -1, -0.18,
+     1,  0,  0, -0.16,
+     0,  0,  0,  1.0]
+
+
+
+
+
+
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
 #--------------------------------------------------------------------------------------------

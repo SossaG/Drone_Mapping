@@ -14,6 +14,10 @@
 #include <queue>
 #include <mutex>
 #include <memory>
+// From orb_slam_mono.cpp
+extern std::mutex g_imu_mtx;
+extern std::deque<ImuSample> g_imu_buf;
+
 
 class ImageGrabber : public std::enable_shared_from_this<ImageGrabber>
 {
@@ -46,6 +50,8 @@ public:
     nav_msgs::msg::Odometry odom_msg_;
     std::shared_ptr<rclcpp::Node> rosNode_;
     const std::string tf_frame;
+
+
 };
 
 #endif // IMAGE_GRABBER_HPP

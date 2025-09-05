@@ -5,16 +5,16 @@
 
 Camera.type: "PinHole"
 
-Camera.fx: 1094.1702
-Camera.fy: 1073.72754
-Camera.cx: 256.58644
-Camera.cy: 269.55757
+Camera.fx: 412.20587
+Camera.fy: 414.17592
+Camera.cx: 323.58186
+Camera.cy: 223.27381
 
 # distortion parameters
-Camera.k1: 0.162732
-Camera.k2: -0.165015
-Camera.p1: 0.008211
-Camera.p2: -0.028931
+Camera.k1: 0.009337
+Camera.k2: -0.075506
+Camera.p1: -0.012976
+Camera.p2: 0.002530
 Camera.k3: 0.000000
 
 # Camera original resolution
@@ -22,7 +22,7 @@ Camera.width: 640
 Camera.height: 480
 
 # Camera frames per second
-Camera.fps: 8.0
+Camera.fps: 7.0   # keep or set to your actual rate (e.g., 30.0)
 
 # Camera.bf: 40.0  # Set based on your baseline
 
@@ -31,6 +31,33 @@ Camera.RGB: 1
 
 # ThDepth: 40.0
 # DepthMapFactor: 1.0
+
+# IMU block (types that ORB-SLAM3 expects)
+IMU.InsertKFsWhenLost: 0
+
+IMU.NoiseGyro:  0.002     # ok as float
+IMU.NoiseAcc:   0.03      # ok as float
+IMU.GyroWalk:   0.0001    # ok as float
+IMU.AccWalk:    0.001     # ok as float
+IMU.Frequency:  100       # <-- MUST be an integer (no quotes, no decimal)
+IMU.g:          9.81      # ok as float
+
+# Camera (optical) -> IMU (body) transform used by ORB-SLAM3
+#the following is my own measured transform of the cam to imu when placed to the right of my touchpad
+Tbc: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: f
+  data: [
+     0, -1,  0,  0.12,
+     0,  0, -1, -0.18,
+     1,  0,  0, -0.16,
+     0,  0,  0,  1.0]
+
+
+
+
+
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters

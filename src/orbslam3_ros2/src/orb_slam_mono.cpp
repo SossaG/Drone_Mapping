@@ -20,6 +20,20 @@
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 //-----New-----
+#include <sensor_msgs/msg/imu.hpp>
+#include <deque>
+#include <mutex>
+
+// IMU sample (SI units: m/s^2, rad/s)
+struct ImuSample {
+  double t;
+  float ax, ay, az;
+  float gx, gy, gz;
+};
+
+// Global buffer (visible to image_grabber_mono.*)
+std::mutex g_imu_mtx;
+std::deque<ImuSample> g_imu_buf;
 
 
 // Function to broadcast static transform
@@ -72,10 +86,38 @@ int main(int argc, char *argv[])
     // auto igb = std::make_shared<ImageGrabber>(SLAM, bEqual, odom_pub, cloud_pub, node, "odom");
 
     // Creating Image subscription
-    std::string imgTopicName = "/camera/rgb/image_color" ;
+    std::string imgTopicName = "/image_raw" ;
     // Subscribe to the camera image topic
     auto sub_img0 = node->create_subscription<sensor_msgs::msg::Image>(
         imgTopicName, 5, [igb](const sensor_msgs::msg::Image::SharedPtr msg) { RCLCPP_INFO(rclcpp::get_logger("orbslam3_ros2"), "Received an image!"); igb->grabImage(msg); });
+
+
+
+    // Create IMU subscription (direct, no param/arg)
+    std::string imuTopicName = "/imu/data_raw";
+    auto imu_sub = node->create_subscription<sensor_msgs::msg::Imu>(
+        imuTopicName, rclcpp::SensorDataQoS(),
+        [](const sensor_msgs::msg::Imu::SharedPtr msg)
+        {
+            ImuSample s;
+            s.t  = rclcpp::Time(msg->header.stamp).seconds();
+            s.ax = static_cast<float>(msg->linear_acceleration.x);
+            s.ay = static_cast<float>(msg->linear_acceleration.y);
+            s.az = static_cast<float>(msg->linear_acceleration.z);
+            s.gx = static_cast<float>(msg->angular_velocity.x);
+            s.gy = static_cast<float>(msg->angular_velocity.y);
+            s.gz = static_cast<float>(msg->angular_velocity.z);
+
+            std::lock_guard<std::mutex> lk(g_imu_mtx);
+            g_imu_buf.push_back(std::move(s));
+            // keep ~5 s of data to bound memory and ensure we can slice across frames
+            while (!g_imu_buf.empty() && (g_imu_buf.back().t - g_imu_buf.front().t) > 5.0)
+                g_imu_buf.pop_front();
+        });
+
+
+
+
 
     // Start processing images in a separate thread
     std::thread image_thread(&ImageGrabber::processImages, igb);

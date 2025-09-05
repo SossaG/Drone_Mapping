@@ -7,6 +7,10 @@
 #include <Eigen/Core>
 #include <fstream>
 #include <sophus/se3.hpp>
+#include "include/System.h"   // (if not already present via header)
+extern std::mutex g_imu_mtx;
+extern std::deque<ImuSample> g_imu_buf;
+
 
 ImageGrabber::ImageGrabber(std::shared_ptr<ORB_SLAM3::System> pSLAM, bool bClahe,
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr rospub,
@@ -28,7 +32,7 @@ cv::Mat ImageGrabber::getImage(const sensor_msgs::msg::Image::SharedPtr &img_msg
 {
     try
     {
-        cv::Mat image = cv_bridge::toCvCopy(img_msg, "bgr8")->image;
+        cv::Mat image = cv_bridge::toCvCopy(img_msg, "rgb8")->image;
         if (mbClahe)
         {
             cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
@@ -84,9 +88,35 @@ void ImageGrabber::processImages()
         if (image.empty())
             continue;        
 
-        // Track the image and get the camera pose
-        Sophus::SE3f pose = mpSLAM->TrackMonocular(image,
-            img_msg->header.stamp.sec + 1e-9 * img_msg->header.stamp.nanosec);
+        // Timestamp in seconds
+        const double tframe = img_msg->header.stamp.sec + 1e-9 * img_msg->header.stamp.nanosec;
+
+        // Slice IMUs between last and current frame times
+        static double last_t = -1.0;
+        const double t0 = (last_t > 0.0) ? last_t : (tframe - 0.02);  // small warm start
+        last_t = tframe;
+
+        std::vector<ORB_SLAM3::IMU::Point> vImu;
+        {
+            std::lock_guard<std::mutex> lk(g_imu_mtx);
+            auto it = g_imu_buf.begin();
+            while (it != g_imu_buf.end() && it->t <= tframe) {
+                if (it->t >= t0) {
+                    vImu.emplace_back(
+                        it->ax, it->ay, it->az,   // linear accel [m/s^2]
+                        it->gx, it->gy, it->gz,   // angular vel [rad/s]
+                        it->t                      // timestamp [s]
+                    );
+                }
+                it = g_imu_buf.erase(it);  // drop consumed messages
+            }
+        }
+
+        // Call the inertial overload if we have IMU; otherwise fall back to vision-only
+        Sophus::SE3f pose = vImu.empty()
+            ? mpSLAM->TrackMonocular(image, tframe)
+            : mpSLAM->TrackMonocular(image, tframe, vImu);
+
 
         // Save pose to file
         //savePoseToFile(pose, img_msg->header.stamp.sec, img_msg->header.stamp.nanosec);
