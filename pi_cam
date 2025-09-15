@@ -50,6 +50,9 @@ ros2 run v4l2_camera v4l2_camera_node --ros-args \
   -r camera_info:=/camera_info
 
 
+To screen record on Ubuntu, use the built-in screenshot tool by pressing Ctrl+Alt+Shift+R
+
+
 cat <<'SDP' | ffplay -fflags nobuffer -flags low_delay -probesize 32 -analyzeduration 0 \
   -protocol_whitelist file,udp,rtp,pipe -i -
 v=0

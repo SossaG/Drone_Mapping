@@ -24,7 +24,7 @@ def generate_launch_description():
     slam_pkg_path = get_package_share_directory("orbslam3_ros2")
 
     vocab_file = os.path.join(slam_pkg_path, "config", "ORBvoc.txt")
-    settings_file = os.path.join(slam_pkg_path, "config", "my_mono_cam.yaml")
+    settings_file = os.path.join(slam_pkg_path, "config", "rpi_cam_mono.yaml")
 
     print(f"Path of vocab file: {vocab_file}")
     print(f"Path of settings file: {settings_file}")
