@@ -24,7 +24,7 @@ def generate_launch_description():
     slam_pkg_path = get_package_share_directory("orbslam3_ros2")
 
     vocab_file = os.path.join(slam_pkg_path, "config", "ORBvoc.txt")
-    settings_file = os.path.join(slam_pkg_path, "config", "rpi_cam_mono.yaml")
+    settings_file = os.path.join(slam_pkg_path, "config", "my_mono_cam.yaml")
 
     print(f"Path of vocab file: {vocab_file}")
     print(f"Path of settings file: {settings_file}")
@@ -48,9 +48,7 @@ def generate_launch_description():
             {"vocab_path": vocab_file},
             {"config_path": settings_file},
         ],
-        remappings=[
-        ('/camera/rgb/image_color', '/image_raw')  # <-- this does the trick
-    	]
+
     )
 
     # ensure bags/ exists inside your workspace
@@ -65,12 +63,13 @@ def generate_launch_description():
         output='screen'
     )
 
-    # Octomap Server Node (only launch if start_octomap is true)
+        # Octomap Server Node (SAGAR) (only launch if start_octomap is true)
     octomap_server_node = ExecuteProcess(
-        cmd=['ros2', 'run', 'octomap_server', 'octomap_server_node', '--ros-args', '--remap', 'cloud_in:=/slam/pointcloud'],
+        cmd=['ros2', 'run', 'octomap_server', 'octomap_server_node', '--ros-args', '--remap', 'cloud_in:=/slam/pointcloud', '-p','resolution:=0.02'],
         condition=IfCondition(LaunchConfiguration("start_octomap")),
         # condition=lambda context: context.launch_configurations['start_octomap'] == 'true'
     )
+
 
     return LaunchDescription([
         record_bag_arg,

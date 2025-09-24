@@ -35,7 +35,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 1
+      Cell Size: 0.1
       Class: rviz_default_plugins/Grid
       Color: 160; 160; 164
       Enabled: true

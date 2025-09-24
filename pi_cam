@@ -106,3 +106,43 @@ projection
 
 
 /home/ivans/pi_cam_callibration/calibrationdata/pi_cam_3.yaml
+
+
+#to run my own octomap and pointcloud launches
+ros2 launch cf3d_nav cf3d_nav_full.launch.py
+
+#---------------------------------------------------------------------------------------------------------------
+# for v4l2 canera node
+
+    slam_node = Node(
+        package='orbslam3_ros2',
+        executable=LaunchConfiguration('camera_type'),  # Get the executable based on camera type
+        output='screen',
+        parameters=[
+            {"vocab_path": vocab_file},
+            {"config_path": settings_file},
+        ],
+        remappings=[
+        ('/camera/rgb/image_color', '/image_raw')  # <-- this does the trick
+    	]
+    )
+
+
+    # Octomap Server Node (SAGAR) (only launch if start_octomap is true)
+    octomap_server_node = ExecuteProcess(
+        cmd=['ros2', 'run', 'octomap_server', 'octomap_server_node', '--ros-args', '--remap', 'cloud_in:=/slam/pointcloud', '-p','resolution:=0.05'],
+        condition=IfCondition(LaunchConfiguration("start_octomap")),
+        # condition=lambda context: context.launch_configurations['start_octomap'] == 'true'
+    )
+
+        return LaunchDescription([
+        record_bag_arg,
+        start_octomap,
+        visualize_arg,
+        camera_type_arg,
+        slam_node,
+        bag_record_process,
+        OpaqueFunction(function=launch_rviz2),
+        octomap_server_node
+    ])
+#---------------------------------------------------------------------------------------------------------------
