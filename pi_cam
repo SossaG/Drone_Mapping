@@ -146,3 +146,8 @@ ros2 launch cf3d_nav cf3d_nav_full.launch.py
         octomap_server_node
     ])
 #---------------------------------------------------------------------------------------------------------------
+
+
+ 
+
+ros2 run image_tools cam2image --ros-args -p device_id:=0 -p width:=640 -p height:=480 --remap image:=/camera/rgb/image_color -p freq:=7.0

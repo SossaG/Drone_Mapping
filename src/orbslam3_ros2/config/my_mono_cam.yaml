@@ -5,16 +5,16 @@
 
 Camera.type: "PinHole"
 
-Camera.fx: 412.20587
-Camera.fy: 414.17592
-Camera.cx: 323.58186
-Camera.cy: 223.27381
+Camera.fx: 462.698105
+Camera.fy: 456.817400
+Camera.cx: 354.636361
+Camera.cy: 245.892197
 
 # distortion parameters
-Camera.k1: 0.009337
-Camera.k2: -0.075506
-Camera.p1: -0.012976
-Camera.p2: 0.002530
+Camera.k1: 0.162047
+Camera.k2: -0.133637
+Camera.p1: 0.001451
+Camera.p2: 0.032530
 Camera.k3: 0.000000
 
 # Camera original resolution
@@ -49,8 +49,8 @@ ORBextractor.nLevels: 8 #8
 # Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
 # You can lower these values if your images have low contrast
-ORBextractor.iniThFAST: 20 #20
-ORBextractor.minThFAST: 7 #7
+ORBextractor.iniThFAST: 15 #20
+ORBextractor.minThFAST: 4 #7
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters
