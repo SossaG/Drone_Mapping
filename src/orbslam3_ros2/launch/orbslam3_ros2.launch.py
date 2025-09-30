@@ -39,7 +39,7 @@ def generate_launch_description():
     camera_type_arg = DeclareLaunchArgument(
         'camera_type', default_value='mono', description='Camera type: mono, rgbd, stereo')
 
-
+ # we'll pass 'mono' but our binary now does IMU_MONOCULAR
     slam_node = Node(
         package='orbslam3_ros2',
         executable=LaunchConfiguration('camera_type'),  # Get the executable based on camera type

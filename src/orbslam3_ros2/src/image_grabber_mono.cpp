@@ -10,6 +10,7 @@
 #include "include/Atlas.h"
 #include "include/Map.h"
 #include "include/MapPoint.h"
+#include <sensor_msgs/msg/imu.hpp>
 
 
 ImageGrabber::ImageGrabber(std::shared_ptr<ORB_SLAM3::System> pSLAM, bool bClahe,
@@ -21,6 +22,37 @@ ImageGrabber::ImageGrabber(std::shared_ptr<ORB_SLAM3::System> pSLAM, bool bClahe
         odom_msg_.header.frame_id = tf_frame;
         odom_msg_.child_frame_id = "odom";
     }
+
+void ImageGrabber::grabImu(const sensor_msgs::msg::Imu::SharedPtr msg) {
+    std::lock_guard<std::mutex> lock(mImuMutex);
+    // Append; Phidgets/most drivers publish with monotonic stamps already
+    imuBuf.push_back(msg);
+}
+
+std::vector<ORB_SLAM3::IMU::Point> ImageGrabber::takeImuSlice(double t_end_sec) {
+  std::vector<ORB_SLAM3::IMU::Point> out;
+  std::lock_guard<std::mutex> lock(mImuMutex);
+  while (!imuBuf.empty()) {
+    const auto& m = imuBuf.front();
+    const double t = m->header.stamp.sec + 1e-9 * m->header.stamp.nanosec;
+    if (t > t_end_sec) break;
+
+    const auto& a = m->linear_acceleration; // m/s^2
+    const auto& g = m->angular_velocity;    // rad/s
+
+    // ORB_SLAM3::IMU::Point wants cv::Point3f or 7 floats
+    const cv::Point3f acc_cv(static_cast<float>(a.x),
+                             static_cast<float>(a.y),
+                             static_cast<float>(a.z));
+    const cv::Point3f gyr_cv(static_cast<float>(g.x),
+                             static_cast<float>(g.y),
+                             static_cast<float>(g.z));
+
+    out.emplace_back(acc_cv, gyr_cv, t);   // <- THIS is the key change
+    imuBuf.pop_front();
+  }
+  return out;
+}
 
 void ImageGrabber::grabImage(const sensor_msgs::msg::Image::SharedPtr msg)
 {
@@ -88,9 +120,10 @@ void ImageGrabber::processImages()
         if (image.empty())
             continue;        
 
-        // Track the image and get the camera pose
-        Sophus::SE3f pose = mpSLAM->TrackMonocular(image,
-            img_msg->header.stamp.sec + 1e-9 * img_msg->header.stamp.nanosec);
+        // Track the image *with* IMU and get the camera pose
+        const double t_img = img_msg->header.stamp.sec + 1e-9 * img_msg->header.stamp.nanosec;
+        std::vector<ORB_SLAM3::IMU::Point> vImu = takeImuSlice(t_img);
+        Sophus::SE3f pose = mpSLAM->TrackMonocular(image, t_img, vImu);
 
         // Save pose to file
         //savePoseToFile(pose, img_msg->header.stamp.sec, img_msg->header.stamp.nanosec);

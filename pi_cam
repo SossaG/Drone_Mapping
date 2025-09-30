@@ -151,3 +151,14 @@ ros2 launch cf3d_nav cf3d_nav_full.launch.py
  
 
 ros2 run image_tools cam2image --ros-args -p device_id:=0 -p width:=640 -p height:=480 --remap image:=/camera/rgb/image_color -p freq:=7.0
+
+#the fized transform visuaised on rviz
+Tbc: !!opencv-matrix    
+  rows: 4
+  cols: 4
+  dt: f
+  data: [
+     0,  0,  1,  -0.12,
+    -1,  0,  0, -0.18,
+     0, -1,  0,  0.16,
+     0,  0,  0,  1.0]

@@ -8,19 +8,26 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 // #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include "include/System.h"  // Include the SLAM system header
+#include "include/ImuTypes.h"  // ORB_SLAM3::IMU::Point
 
 #include <queue>
+#include <deque>
+#include <vector>    
 #include <mutex>
 #include <memory>
 #include <Eigen/Core>
+#include <opencv2/core/types.hpp>  // for cv::Point3f
 
 
 class ImageGrabber : public std::enable_shared_from_this<ImageGrabber>
 {
 private:
     bool first_pose;
+    std::deque<sensor_msgs::msg::Imu::SharedPtr> imuBuf;
+    std::mutex mImuMutex;
 public:
     ImageGrabber();
     ImageGrabber(std::shared_ptr<ORB_SLAM3::System> pSLAM, bool bClahe, 
@@ -30,6 +37,7 @@ public:
     std::shared_ptr<rclcpp::Node> ros_node,const std::string camera_frame_name);
 
     void grabImage(const sensor_msgs::msg::Image::SharedPtr msg);
+    void grabImu(const sensor_msgs::msg::Imu::SharedPtr msg);
     cv::Mat getImage(const sensor_msgs::msg::Image::SharedPtr &img_msg);
 
     void savePoseToFile(const Sophus::SE3f &pose, double sec, double nanosec);
@@ -52,6 +60,10 @@ public:
 
     // Pangolin-equivalent point cloud (all good MapPoints from the current map)
     std::vector<Eigen::Vector3f> getPangolinPointCloud();
+    // IMU buffering (time-ordered by ROS header stamp)
+    // Helper: pop IMU measurements up to (and including) t_end (sec)
+    // and return vector of ORB_SLAM3::IMU::Point
+    std::vector<ORB_SLAM3::IMU::Point> takeImuSlice(double t_end_sec);
 };
 
 #endif // IMAGE_GRABBER_HPP
