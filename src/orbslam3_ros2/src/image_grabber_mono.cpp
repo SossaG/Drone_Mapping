@@ -11,6 +11,8 @@
 #include "include/Map.h"
 #include "include/MapPoint.h"
 #include <sensor_msgs/msg/imu.hpp>
+#include <limits>  // std::numeric_limits
+#include <cmath>   // std::isnan (optional)
 
 
 ImageGrabber::ImageGrabber(std::shared_ptr<ORB_SLAM3::System> pSLAM, bool bClahe,
@@ -25,9 +27,33 @@ ImageGrabber::ImageGrabber(std::shared_ptr<ORB_SLAM3::System> pSLAM, bool bClahe
 
 void ImageGrabber::grabImu(const sensor_msgs::msg::Imu::SharedPtr msg) {
     std::lock_guard<std::mutex> lock(mImuMutex);
-    // Append; Phidgets/most drivers publish with monotonic stamps already
     imuBuf.push_back(msg);
+
+    // Throttled “IMU rx” debug
+    static size_t imu_rx = 0;
+    imu_rx++;
+
+    // IMPORTANT:
+    //  - Use rosNode_->get_logger() and *rosNode_->get_clock()
+    //  - DO NOT use this->get_clock() (ImageGrabber is not a Node)
+    //  - DO NOT introduce any 'imu_msg' variable; use 'msg' directly
+    RCLCPP_INFO_THROTTLE(
+        rosNode_->get_logger(),
+        *rosNode_->get_clock(),
+        2000,  // every 2s
+        "IMU rx #%zu  t=%.6f  accel=[%.3f %.3f %.3f]  gyro=[%.3f %.3f %.3f]  buf=%zu",
+        imu_rx,
+        rclcpp::Time(msg->header.stamp).seconds(),
+        msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z,
+        msg->angular_velocity.x,    msg->angular_velocity.y,    msg->angular_velocity.z,
+        imuBuf.size()
+    );
 }
+
+
+
+
+
 
 std::vector<ORB_SLAM3::IMU::Point> ImageGrabber::takeImuSlice(double t_end_sec) {
   std::vector<ORB_SLAM3::IMU::Point> out;
@@ -105,9 +131,10 @@ void ImageGrabber::savePoseToFile(const Sophus::SE3f &pose, double sec, double n
 }
 
 void ImageGrabber::processImages()
-{
+{   
+    static double prev_img_time = std::numeric_limits<double>::quiet_NaN();
     while (rclcpp::ok())
-    {
+    {   
         sensor_msgs::msg::Image::SharedPtr img_msg;
         {
             std::lock_guard<std::mutex> lock(mBufMutex);
@@ -123,6 +150,38 @@ void ImageGrabber::processImages()
         // Track the image *with* IMU and get the camera pose
         const double t_img = img_msg->header.stamp.sec + 1e-9 * img_msg->header.stamp.nanosec;
         std::vector<ORB_SLAM3::IMU::Point> vImu = takeImuSlice(t_img);
+        RCLCPP_INFO_THROTTLE(
+            rosNode_->get_logger(),
+            *rosNode_->get_clock(),
+            2000,
+            "Feeding IMU to tracker: vImu.size()=%zu  img_t=%.6f%s",
+            vImu.size(),
+            t_img,
+            (vImu.empty() ? "  << NO IMU for this frame" : "")
+        );
+
+        if (!vImu.empty()) {
+            const double t0 = vImu.front().t;
+            const double t1 = vImu.back().t;
+
+            RCLCPP_INFO_THROTTLE(
+                rosNode_->get_logger(), *rosNode_->get_clock(), 2000,
+                "IMU window used: %zu samples  [%.6f .. %.6f]  for img_t=%.6f  gaps: pre=%.4f post=%.4f",
+                vImu.size(), t0, t1, t_img,
+                (std::isnan(prev_img_time) ? 0.0 : (t0 - prev_img_time)),  // time since last image to first IMU
+                (t_img - t1)                                              // time from last IMU to this image
+            );
+        } else {
+            RCLCPP_WARN_THROTTLE(
+                rosNode_->get_logger(), *rosNode_->get_clock(), 2000,
+                "IMU window EMPTY for img_t=%.6f (no samples between last image and this one)",
+                t_img
+            );
+            }
+
+        // update for next frame AFTER logging
+        prev_img_time = t_img;
+
         Sophus::SE3f pose = mpSLAM->TrackMonocular(image, t_img, vImu);
 
         // Save pose to file

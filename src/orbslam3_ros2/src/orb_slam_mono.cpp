@@ -64,10 +64,20 @@ int main(int argc, char *argv[])
     // Publish static transform
     publish_static_transform(node);
 
-    // Create SLAM system and ImageGrabber
-    // Enable IMU fusion (mono-inertial)
-    auto SLAM = std::make_shared<ORB_SLAM3::System>(vocab_path, config_path, ORB_SLAM3::System::IMU_MONOCULAR, showPangolin);
-    // auto igb = std::make_shared<ImageGrabber>(SLAM, bEqual, odom_pub, cloud_pub, node, "oak-d_frame");
+    // Pick the sensor you’re actually using here.
+    // If you have added IMU flow into the mono wrapper, set IMU_MONOCULAR:
+    const ORB_SLAM3::System::eSensor sensor_mode = ORB_SLAM3::System::IMU_MONOCULAR;
+
+    auto SLAM = std::make_shared<ORB_SLAM3::System>(
+        vocab_path, config_path, sensor_mode, showPangolin
+    );
+
+    RCLCPP_INFO(
+        node->get_logger(),
+        "ORB-SLAM3 constructed with sensor_mode=%d (0=MONOCULAR, 3=IMU_MONOCULAR)",
+        static_cast<int>(sensor_mode)
+    );
+
     
     
     auto igb = std::make_shared<ImageGrabber>(SLAM, bEqual, odom_pub, cloud_pub, node, "map");
@@ -78,7 +88,10 @@ int main(int argc, char *argv[])
     std::string imgTopicName = "/camera/rgb/image_color" ;
     // Subscribe to the camera image topic
     auto sub_img0 = node->create_subscription<sensor_msgs::msg::Image>(
-        imgTopicName, 5, [igb](const sensor_msgs::msg::Image::SharedPtr msg) { RCLCPP_INFO(rclcpp::get_logger("orbslam3_ros2"), "Received an image!"); igb->grabImage(msg); });
+    imgTopicName, 5,
+    [igb](const sensor_msgs::msg::Image::SharedPtr msg) {
+        igb->grabImage(msg);
+    });
 
    // IMU from Phidget driver (already m/s^2 and rad/s)
     auto sub_imu = node->create_subscription<sensor_msgs::msg::Imu>(
