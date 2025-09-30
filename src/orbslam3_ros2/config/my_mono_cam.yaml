@@ -40,7 +40,7 @@ IMU.NoiseAcc:   0.03      # ok as float
 IMU.GyroWalk:   0.0001    # ok as float
 IMU.AccWalk:    0.001     # ok as float
 IMU.Frequency:  100       # <-- MUST be an integer (no quotes, no decimal)
-#IMU.g:          9.81      # ok as float CHAT GAVE ME THIS ONE WHICH I BELIEVE DIDNT ERROR SO MAYBE TRY AFTER
+IMU.g:          9.81      # ok as float CHAT GAVE ME THIS ONE WHICH I BELIEVE DIDNT ERROR SO MAYBE TRY AFTER
 
 # Camera (optical) -> IMU (body) transform used by ORB-SLAM3
 #the following is my own measured transform of the cam to imu when placed to the right of my touchpad

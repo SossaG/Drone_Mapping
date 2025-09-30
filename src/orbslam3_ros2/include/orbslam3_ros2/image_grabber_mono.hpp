@@ -60,10 +60,9 @@ public:
 
     // Pangolin-equivalent point cloud (all good MapPoints from the current map)
     std::vector<Eigen::Vector3f> getPangolinPointCloud();
-    // IMU buffering (time-ordered by ROS header stamp)
-    // Helper: pop IMU measurements up to (and including) t_end (sec)
-    // and return vector of ORB_SLAM3::IMU::Point
-    std::vector<ORB_SLAM3::IMU::Point> takeImuSlice(double t_end_sec);
+    // Returns IMU samples in a small window around the last image time up to t_img.
+    // Each element is ORB_SLAM3::IMU::Point(a, w, t) with timestamps in seconds.
+    std::vector<ORB_SLAM3::IMU::Point> takeImuSlice(double t_img);
 };
 
 #endif // IMAGE_GRABBER_HPP

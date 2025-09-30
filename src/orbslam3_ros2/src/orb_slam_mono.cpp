@@ -22,7 +22,6 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 //-----New-----
 
-
 // Function to broadcast static transform
 void publish_static_transform(std::shared_ptr<rclcpp::Node> node)
 {

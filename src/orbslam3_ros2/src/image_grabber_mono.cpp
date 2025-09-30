@@ -13,6 +13,8 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <limits>  // std::numeric_limits
 #include <cmath>   // std::isnan (optional)
+#include <algorithm>   // std::sort
+
 
 
 ImageGrabber::ImageGrabber(std::shared_ptr<ORB_SLAM3::System> pSLAM, bool bClahe,
@@ -55,30 +57,99 @@ void ImageGrabber::grabImu(const sensor_msgs::msg::Imu::SharedPtr msg) {
 
 
 
-std::vector<ORB_SLAM3::IMU::Point> ImageGrabber::takeImuSlice(double t_end_sec) {
-  std::vector<ORB_SLAM3::IMU::Point> out;
-  std::lock_guard<std::mutex> lock(mImuMutex);
-  while (!imuBuf.empty()) {
-    const auto& m = imuBuf.front();
-    const double t = m->header.stamp.sec + 1e-9 * m->header.stamp.nanosec;
-    if (t > t_end_sec) break;
+std::vector<ORB_SLAM3::IMU::Point> ImageGrabber::takeImuSlice(const double t_img)
+{
+    // Lower bound of the slice is the previous image time.
+    // We require IMU.t to be STRICTLY GREATER than last_img_time and <= t_img.
+    static double last_img_time = std::numeric_limits<double>::quiet_NaN();
+    if (std::isnan(last_img_time)) {
+        // First call: start exactly at this frame; next call will have a real window.
+        last_img_time = t_img;
+    }
 
-    const auto& a = m->linear_acceleration; // m/s^2
-    const auto& g = m->angular_velocity;    // rad/s
+    // Strict lower bound tolerance (avoid zero/negative dt against last_img_time).
+    constexpr double MIN_DT = 1e-6;     // 1 microsecond
+    // NO upper jitter tolerance here: do NOT accept IMU newer than the image.
+    // (Allowing future samples caused your 'post' to go negative.)
 
-    // ORB_SLAM3::IMU::Point wants cv::Point3f or 7 floats
-    const cv::Point3f acc_cv(static_cast<float>(a.x),
-                             static_cast<float>(a.y),
-                             static_cast<float>(a.z));
-    const cv::Point3f gyr_cv(static_cast<float>(g.x),
-                             static_cast<float>(g.y),
-                             static_cast<float>(g.z));
+    // Filter silly values to protect preintegration.
+    constexpr float  A_MAX = 200.0f;    // m/s^2
+    constexpr float  G_MAX = 50.0f;     // rad/s
 
-    out.emplace_back(acc_cv, gyr_cv, t);   // <- THIS is the key change
-    imuBuf.pop_front();
-  }
-  return out;
+    std::vector<ORB_SLAM3::IMU::Point> out;
+    out.reserve(32);
+
+    {
+        std::lock_guard<std::mutex> lock(mImuMutex);
+
+        // Collect IMUs in (last_img_time, t_img]  (strictly greater than lower bound)
+        for (const auto &m : imuBuf) {
+            const double ti = rclcpp::Time(m->header.stamp).seconds();
+
+            if (ti <= last_img_time + MIN_DT) continue;  // strictly greater than previous frame time
+            if (ti  > t_img)                 continue;    // never include IMU after the image
+
+            const float ax = static_cast<float>(m->linear_acceleration.x);
+            const float ay = static_cast<float>(m->linear_acceleration.y);
+            const float az = static_cast<float>(m->linear_acceleration.z);
+            const float gx = static_cast<float>(m->angular_velocity.x);
+            const float gy = static_cast<float>(m->angular_velocity.y);
+            const float gz = static_cast<float>(m->angular_velocity.z);
+
+            if (!std::isfinite(ax) || !std::isfinite(ay) || !std::isfinite(az) ||
+                !std::isfinite(gx) || !std::isfinite(gy) || !std::isfinite(gz)) {
+                continue;
+            }
+            if (std::fabs(ax) > A_MAX || std::fabs(ay) > A_MAX || std::fabs(az) > A_MAX ||
+                std::fabs(gx) > G_MAX || std::fabs(gy) > G_MAX || std::fabs(gz) > G_MAX) {
+                continue;
+            }
+
+            // ORB_SLAM3::IMU::Point ctor in your build: (ax, ay, az, gx, gy, gz, t)
+            out.emplace_back(ax, ay, az, gx, gy, gz, ti);
+        }
+
+        // Keep buffer bounded (oldest data older than ~1.5s behind current image)
+        while (!imuBuf.empty()) {
+            const double t_front = rclcpp::Time(imuBuf.front()->header.stamp).seconds();
+            if (t_front < t_img - 1.5) imuBuf.pop_front();
+            else break;
+        }
+    } // unlock
+
+    if (out.empty()) {
+        // Advance lower bound so we don't reuse stale IMUs next frame.
+        last_img_time = t_img;
+        return out;
+    }
+
+    // Ensure strictly increasing timestamps and drop any duplicates.
+    std::sort(out.begin(), out.end(),
+              [](const ORB_SLAM3::IMU::Point &a, const ORB_SLAM3::IMU::Point &b) {
+                  return a.t < b.t;
+              });
+
+    std::vector<ORB_SLAM3::IMU::Point> uniq;
+    uniq.reserve(out.size());
+    uniq.push_back(out[0]);
+    for (size_t i = 1; i < out.size(); ++i) {
+        if (out[i].t - uniq.back().t > MIN_DT) {
+            uniq.push_back(out[i]);
+        }
+        // else drop it; zero/negative dt can blow up Sophus::SO3::exp
+    }
+    out.swap(uniq);
+
+    // Safety: ensure the last sample is not after the image due to rounding.
+    while (!out.empty() && out.back().t > t_img) out.pop_back();
+
+    // Slide lower bound for next call AFTER building this slice.
+    last_img_time = t_img;
+    return out;
 }
+
+
+
 
 void ImageGrabber::grabImage(const sensor_msgs::msg::Image::SharedPtr msg)
 {
