@@ -58,8 +58,7 @@ public:
     const std::string tf_frame;
 
 
-    // Pangolin-equivalent point cloud (all good MapPoints from the current map)
-    std::vector<Eigen::Vector3f> getPangolinPointCloud();
+
     // Returns IMU samples in a small window around the last image time up to t_img.
     // Each element is ORB_SLAM3::IMU::Point(a, w, t) with timestamps in seconds.
     std::vector<ORB_SLAM3::IMU::Point> takeImuSlice(double t_img);
