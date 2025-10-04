@@ -158,10 +158,10 @@ cv::Mat ImageGrabber::getImage(const sensor_msgs::msg::Image::SharedPtr &img_msg
 {
     try
     {
-        cv::Mat image = cv_bridge::toCvCopy(img_msg, "rgb8")->image;
+        cv::Mat image = cv_bridge::toCvCopy(img_msg, "bgr8")->image;
         if (mbClahe)
         {
-            cv::cvtColor(image, image, cv::COLOR_RGB2GRAY);
+            cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
             mClahe->apply(image, image);
         }
         return image;
