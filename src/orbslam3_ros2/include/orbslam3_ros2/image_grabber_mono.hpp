@@ -49,9 +49,6 @@ public:
     std::shared_ptr<rclcpp::Node> rosNode_;
     const std::string tf_frame;
 
-
-    // Pangolin-equivalent point cloud (all good MapPoints from the current map)
-    std::vector<Eigen::Vector3f> getPangolinPointCloud();
 };
 
 #endif // IMAGE_GRABBER_HPP

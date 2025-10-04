@@ -7,9 +7,7 @@
 #include <Eigen/Core>
 #include <fstream>
 #include <sophus/se3.hpp>
-#include "include/Atlas.h"
-#include "include/Map.h"
-#include "include/MapPoint.h"
+
 
 
 ImageGrabber::ImageGrabber(std::shared_ptr<ORB_SLAM3::System> pSLAM, bool bClahe,
@@ -95,8 +93,18 @@ void ImageGrabber::processImages()
         // Save pose to file
         //savePoseToFile(pose, img_msg->header.stamp.sec, img_msg->header.stamp.nanosec);
 
-        // Collect the same point set Pangolin shows (entire current map)
-        std::vector<Eigen::Vector3f> point_cloud = getPangolinPointCloud();
+        // Get the 3D map points from the SLAM system
+        std::vector<ORB_SLAM3::MapPoint*> mapPoints = mpSLAM->GetTrackedMapPoints();
+
+
+        // Convert ORB-SLAM3 MapPoints to Eigen::Vector3f for ROS2 point cloud
+        std::vector<Eigen::Vector3f> point_cloud;
+        for (auto p : mapPoints)
+        {
+            if (p && !p->isBad()) // Ensure valid points
+            {
+                Eigen::Vector3f pos = p->GetWorldPos(); // Get 3D position
+                point_cloud.emplace_back(pos[0], pos[1], pos[2]);
 
         // Publish pose and point cloud
         publishSE3fToOdom(pose);
@@ -104,26 +112,7 @@ void ImageGrabber::processImages()
     }
 }
 
-std::vector<Eigen::Vector3f> ImageGrabber::getPangolinPointCloud()
-    {
-        std::vector<Eigen::Vector3f> pts;
 
-        // Same source Pangolin uses: current map in the Atlas
-        ORB_SLAM3::Map* pMap = mpSLAM->GetAtlas()->GetCurrentMap();
-        if (!pMap) return pts;
-
-        // Copy of all MapPoints; Map guards its own mutex inside this accessor
-        std::vector<ORB_SLAM3::MapPoint*> vMPs = pMap->GetAllMapPoints();
-        pts.reserve(vMPs.size());
-
-        for (auto* pMP : vMPs)
-        {
-            if (!pMP || pMP->isBad()) continue; // Pangolin skips bad points
-            const Eigen::Vector3f pos = pMP->GetWorldPos();
-            pts.emplace_back(pos[0], pos[1], pos[2]);
-        }
-        return pts;
-    }
 
 
 void ImageGrabber::publishSE3fToOdom(const Sophus::SE3f& Tcw)
