@@ -15,13 +15,13 @@ public:
     input_topic_  = this->declare_parameter<std::string>("input_topic",  "/slam/pointcloud");
     output_topic_ = this->declare_parameter<std::string>("output_topic", "/slam/pointcloud_filtered");
 
-    leaf_size_     = this->declare_parameter<double>("leaf_size", 0.03);
-    mean_k_        = this->declare_parameter<int>("sor_mean_k",24);
-    stddev_mul_    = this->declare_parameter<double>("sor_stddev", 1.0);
-    radius_        = this->declare_parameter<double>("ror_radius", 0.08);
-    min_neighbors_ = this->declare_parameter<int>("ror_min_neighbors", 5 );
+    leaf_size_     = this->declare_parameter<double>("leaf_size", 0.05);
+    mean_k_        = this->declare_parameter<int>("sor_mean_k",150);
+    stddev_mul_    = this->declare_parameter<double>("sor_stddev", 0.2);
+    radius_        = this->declare_parameter<double>("ror_radius", 0.058);
+    min_neighbors_ = this->declare_parameter<int>("ror_min_neighbors", 18 );
 
-    window_size_   = this->declare_parameter<int>("window_size", 5);
+    window_size_   = this->declare_parameter<int>("window_size", 6);
     use_window_    = this->declare_parameter<bool>("use_temporal_window", true);
 
     sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
