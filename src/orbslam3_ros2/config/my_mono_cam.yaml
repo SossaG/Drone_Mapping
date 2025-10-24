@@ -27,7 +27,7 @@ Camera.fps: 7.0   # keep or set to your actual rate (e.g., 30.0)
 # Camera.bf: 40.0  # Set based on your baseline
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
-Camera.RGB: 1
+Camera.RGB: 0
 
 # ThDepth: 40.0
 # DepthMapFactor: 1.0

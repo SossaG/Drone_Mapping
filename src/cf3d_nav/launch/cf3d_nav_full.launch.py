@@ -15,6 +15,6 @@ def generate_launch_description():
         )
     )
     voxelizer = Node(package='cf3d_nav', executable='cf3d_voxelizer', name='cf3d_voxelizer',
-                     parameters=[{'resolution': 0.02, 'inflate_radius': 0.02, 'frame_id':'map'}])
+                     parameters=[{'resolution': 0.001, 'inflate_radius': 0.02, 'frame_id':'map'}])
 
     return LaunchDescription([octo, voxelizer, ])

@@ -45,7 +45,6 @@ ros2 run v4l2_camera v4l2_camera_node --ros-args \
   -p image_size:="[640,480]" \
   -p output_encoding:=rgb8 \
   -p camera_name:=pi_cam_3 \
-  -p camera_info_url:=/home/ivans/pi_cam_callibration/calibrationdata/pi_cam_3.yaml \
   -r image_raw:=/image_raw \
   -r camera_info:=/camera_info
 

@@ -61,3 +61,8 @@ OPEN VINS:
 ros2 bag play V1_01_easy
 
 ros2 launch ov_msckf subscribe.launch.py   config:=euroc_mav   use_stereo:=false   max_cameras:=1   rviz_enable:=true
+
+
+
+ros2 run rviz2 rviz2 -d src/orbslam3_ros2/config/ivanRViz2.rviz
+

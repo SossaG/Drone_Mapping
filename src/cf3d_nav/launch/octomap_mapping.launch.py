@@ -25,12 +25,12 @@ def generate_launch_description():
             name='octomap_server',
             output='screen',
             remappings=[
-                ('cloud_in', '/slam/pointcloud'),
+                ('cloud_in', '/slam/pointcloud_filtered'),
                 ('occupied_cells_vis_array', '/occupied_cells_vis_array_own'),
             ],
             parameters=[
                 # Make voxels coarser to hide single-point noise (try 0.05–0.20)
-                {'resolution': 0.02},
+                {'resolution': 0.0005},
                 {'frame_id': 'odom'},
 
                 # 1) Hard gates on what gets inserted
@@ -47,6 +47,12 @@ def generate_launch_description():
 
                 # Optional: publish free voxels too (for debugging)
                 # {'publish_free_space': True},
+                        # === Visualization colours ===
+                {'color/rainbow': True},                   # enable rainbow colouring by height
+                {'color/height_map': True},                # use height map colour scheme
+                {'color/z_min': -0.05},                     # lowest colour level (m)
+                {'color/z_max': 0.3},                      # highest colour level (m)
+                {'publish_free_space': False},             # optional (for clarity)
             ]
         )
 
