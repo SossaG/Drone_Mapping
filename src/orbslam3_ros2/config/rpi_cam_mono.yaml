@@ -5,16 +5,16 @@
 
 Camera.type: "PinHole"
 
-Camera.fx: 1094.1702
-Camera.fy: 1073.72754
-Camera.cx: 256.58644
-Camera.cy: 269.55757
+Camera.fx: 568.795124
+Camera.fy: 566.781225
+Camera.cx: 333.012057
+Camera.cy: 270.987935
 
 # distortion parameters
-Camera.k1: 0.162732
-Camera.k2: -0.165015
-Camera.p1: 0.008211
-Camera.p2: -0.028931
+Camera.k1: -0.0073070865920324725
+Camera.k2: 0.14801435905604876
+Camera.p1: -0.0034185160109860497
+Camera.p2: 0.004833419546009298
 Camera.k3: 0.000000
 
 # Camera original resolution
