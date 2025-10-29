@@ -30,7 +30,7 @@ def generate_launch_description():
             ],
             parameters=[
                 # Make voxels coarser to hide single-point noise (try 0.05–0.20)
-                {'resolution': 0.0005},
+                {'resolution': 0.002},
                 {'frame_id': 'odom'},
 
                 # 1) Hard gates on what gets inserted

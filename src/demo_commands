@@ -1,0 +1,12 @@
+ros2 bag play rosbag2_2025_10_25-00_56_52/ --topic /camera/rgb/image_color
+
+ros2 launch orbslam3_ros2 orbslam3_ros2.launch.py camera_type:=mono visualize:=true 
+
+ros2 launch cf3d_nav cf3d_nav_full.launch.py
+
+ros2 run octomap_server octomap_saver_node --ros-args -p octomap_path:=/home/ivans/map.bt
+
+octovis /home/ivans/map.bt
+
+
+

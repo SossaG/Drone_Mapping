@@ -11,7 +11,7 @@ def launch_rviz2(context):
     if visualize.lower() == 'true':
         # Get the package share directory and construct the path to the RViz config file
         package_share_directory = get_package_share_directory('orbslam3_ros2')
-        rviz_config_path = os.path.join(package_share_directory, 'config', 'ivanRViz2.rviz')
+        rviz_config_path = os.path.join(package_share_directory, 'config', 'demo_rviz_2.rviz')
 
         return [ExecuteProcess(
             cmd=['rviz2', '-d', rviz_config_path],
